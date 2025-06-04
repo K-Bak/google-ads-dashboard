@@ -1,3 +1,4 @@
+# Opdatering foretaget for at trigge Streamlit Cloud deployment
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -18,8 +19,7 @@ client = gspread.authorize(credentials)
 # --- Hent data ---
 SHEET_ID = "1qGfpJ5wTqLAFtDmKaauOXouAwMKWhIBg9bIyWPEbkzc"
 worksheet = client.open_by_key(SHEET_ID).worksheet("Salg")
-df = get_as_dataframe(worksheet, evaluate_formulas=True)
-df = df.dropna(how="all")
+df = get_as_dataframe(worksheet, evaluate_formulas=True).dropna(how="all")
 
 # --- Forbered data ---
 df["Status"] = (
@@ -29,13 +29,13 @@ df["Status"] = (
     .str.capitalize()
     .replace({"Aflsag": "Afslag"})
 )
-
 df["Dato for salg"] = pd.to_datetime(df["Dato for salg"], dayfirst=True, errors="coerce")
 df["Pris"] = pd.to_numeric(df["Pris"], errors="coerce")
 df["Uge"] = df["Dato for salg"].dt.isocalendar().week
 
 solgte_df = df[df["Status"] == "Godkendt"]
 tilbud_df = df[df["Status"] == "Tilbud"]
+afslag_df = df[df["Status"] == "Afslag"]
 
 # --- Konstanter ---
 total_goal = 146910
@@ -80,6 +80,9 @@ with col1:
         tilbud_ugevis = tilbud_df.groupby("Uge")["Pris"].sum().reindex(alle_uger, fill_value=0)
         ax.plot([f"Uge {u}" for u in tilbud_ugevis.index], tilbud_ugevis.values, linestyle='dashed', color='gray', alpha=0.5, label='Tilbud sendt')
 
+        afslag_ugevis = afslag_df.groupby("Uge")["Pris"].sum().reindex(alle_uger, fill_value=0)
+        ax.plot([f"Uge {u}" for u in afslag_ugevis.index], afslag_ugevis.values, linestyle='dotted', color='firebrick', alpha=0.6, label='Afslag')
+
         ax.axhline(y=restmaal, color='red', linestyle='--', label='Ugemål')
 
         uge_labels = list(ugevis.index)
@@ -106,10 +109,8 @@ with col2:
         gradient_color = gradient_cmap(0.5)
 
         wedges = [
-            Wedge(center=(0, 0), r=1, theta1=90 - procent * 360, theta2=90,
-                  facecolor=gradient_color, width=0.3),
-            Wedge(center=(0, 0), r=1, theta1=90, theta2=450 - procent * 360,
-                  facecolor="#e0e0e0", width=0.3)
+            Wedge(center=(0, 0), r=1, theta1=90 - procent * 360, theta2=90, facecolor=gradient_color, width=0.3),
+            Wedge(center=(0, 0), r=1, theta1=90, theta2=450 - procent * 360, facecolor="#e0e0e0", width=0.3)
         ]
         for w in wedges:
             ax2.add_patch(w)
@@ -138,7 +139,6 @@ st.markdown("<br>", unsafe_allow_html=True)
 produktliste = [
     "Leadpage", "Microsoft Ads", "Youtube Animations video", "Server-Side Tracking", "Cookie"
 ]
-
 produkt_data = solgte_df.groupby("Produkt")["Pris"].agg(["sum", "count"]).reindex(produktliste, fill_value=0).sort_values("sum", ascending=False).head(3)
 cols = st.columns(5)
 
