@@ -148,7 +148,7 @@ with col2:
 # ---------------- Produkt-top3 (år) ------------------------------------------
 st.markdown("<br>", unsafe_allow_html=True)
 produktliste = ["Leadpage", "Microsoft Ads", "Youtube Animations video",
-                "Server-Side Tracking", "Cookie"]
+                "Server-Side Tracking", "Cookie","Andet"]
 prod_year = (solgte_year.groupby("Produkt")["Pris"]
              .agg(["sum", "count"]).reindex(produktliste, fill_value=0)
              .sort_values("sum", ascending=False).head(3))
